@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - rabbitmq
+    environment:
+      DATABASE_URL: postgres://root:123456@db:5432/ecommerce
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./order-service:/usr/src/app
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+      - rabbitmq
+    environment:
+      DATABASE_URL: postgres://root:123456@db:5432/ecommerce
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./inventory-service:/usr/src/app
+
+  db:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
